@@ -1,0 +1,336 @@
+---
+title: "weijie_NMF"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message=FALSE)
+knitr::opts_chunk$set(result=FALSE)
+knitr::opts_chunk$set(warning=FALSE)
+knitr::opts_chunk$set(error=TRUE)
+library(readr)
+library(tidyr)
+library(dplyr)
+library(tibble)
+library(ComplexHeatmap)
+library(circlize)
+library(NMF)
+library(DescTools)
+
+sampleID <- read_csv("./data/sampleID_weijie.csv")
+sampleID2 <- read_csv("./data/sampleID2_weijie.csv")
+```
+
+## Feature matrix {.tabset}
+### 509
+``` {r}
+weijie_509 <- readRDS("./cache/mutation_table/weijie_509.rds")
+
+df_all <- data.frame()
+for (i in 1:30) {
+  s1 <- weijie_509[[i]] %>%
+    filter(type != "unmutated") %>%
+    mutate(count=count*1e6/sum(count)) %>%
+    select(cigar,type,count)
+  if (nrow(df_all) == 0) {
+    df_all <- rbind(df_all,s1)
+  }
+  else {
+    df_all <- full_join(df_all,s1) %>%
+      mutate(count=replace_na(count,0))
+  }
+  df_all[[sampleID$Lesion[i]]] <- df_all$count
+  df_all$count <- NULL
+}
+df_all <- column_to_rownames(df_all,"cigar")
+m_509 <- as.matrix(select(df_all,-type))
+m_509[is.na(m_509)] <- 0
+m_509 <- log10(m_509+1)
+# svg("./figures/weijie/509_heatmap.svg")
+aheatmap(m_509)
+# dev.off()
+```
+
+### 510
+``` {r}
+weijie_510 <- readRDS("./cache/mutation_table/weijie_510.rds")
+
+df_all <- data.frame()
+for (i in 31:63) {
+  s1 <- weijie_510[[i]] %>%
+    filter(type != "unmutated") %>%
+    mutate(count=count*1e6/sum(count)) %>%
+    select(cigar,type,count)
+  if (nrow(df_all) == 0) {
+    df_all <- rbind(df_all,s1)
+  }
+  else {
+    df_all <- full_join(df_all,s1) %>%
+      mutate(count=replace_na(count,0))
+  }
+  df_all[[sampleID$Lesion[i]]] <- df_all$count
+  df_all$count <- NULL
+}
+df_all <- column_to_rownames(df_all,"cigar")
+m_510 <- as.matrix(select(df_all,-type))
+m_510[is.na(m_510)] <- 0
+m_510 <- log10(m_510+1)
+# svg("./figures/weijie/510_heatmap.svg")
+aheatmap(m_510)
+# dev.off()
+```
+
+### 121
+``` {r}
+weijie_121 <- readRDS("./cache/mutation_table/weijie_121.rds")
+
+df_all <- data.frame()
+shannon_entropy <- c()
+for (i in 1:9) {
+  s1 <- weijie_121[[i]] %>%
+    filter(type != "unmutated") %>%
+    mutate(count=count*1e6/sum(count)) %>%
+    select(cigar,type,count)
+  shannon_entropy <- c(shannon_entropy,Entropy(s1$count))
+  if (nrow(df_all) == 0) {
+    df_all <- rbind(df_all,s1)
+  }
+  else {
+    df_all <- full_join(df_all,s1) %>%
+      mutate(count=replace_na(count,0))
+  }
+  df_all[[sampleID2$`Sample Name`[i]]] <- df_all$count
+  df_all$count <- NULL
+}
+df <- data.frame(ID = 1:9,tissue=sampleID2$`Sample Name`[1:9],
+                 shannon_entropy=shannon_entropy) %>%
+  arrange(shannon_entropy)
+
+df_all <- column_to_rownames(df_all,"cigar")
+m_121 <- as.matrix(select(df_all,-type))
+m_121[is.na(m_121)] <- 0
+m_121 <- log10(m_121+1)
+# svg("./figures/weijie/121_heatmap.svg")
+aheatmap(m_121)
+# dev.off()
+```
+
+### 520
+``` {r}
+weijie_520 <- readRDS("./cache/mutation_table/weijie_520.rds")
+
+df_all <- data.frame()
+ids <- c()
+shannon_entropy <- c()
+for (i in 10:29) {
+  if (!is.null(weijie_520[[i]])) {
+  s1 <- weijie_520[[i]] %>%
+    filter(type != "unmutated") %>%
+    mutate(count=count*1e6/sum(count)) %>%
+    select(cigar,type,count)
+  ids <- c(ids,i)
+  shannon_entropy <- c(shannon_entropy,Entropy(s1$count))
+  if (nrow(df_all) == 0) {
+    df_all <- rbind(df_all,s1)
+  }
+  else {
+    df_all <- full_join(df_all,s1) %>%
+      mutate(count=replace_na(count,0))
+  }
+  df_all[[sampleID2$`Sample Name`[i]]] <- df_all$count
+  df_all$count <- NULL
+  }}
+
+df <- data.frame(ID = ids,tissue=sampleID2$`Sample Name`[ids],
+                 shannon_entropy=shannon_entropy) %>%
+  arrange(shannon_entropy)
+
+df_all <- column_to_rownames(df_all,"cigar")
+m_520 <- as.matrix(select(df_all,-type))
+m_520[is.na(m_520)] <- 0
+m_520 <- log10(m_520+1)
+# svg("./figures/weijie/520_heatmap.svg")
+aheatmap(m_520)
+# dev.off()
+```
+
+## NMF{.tabset}
+### 509
+``` {r}
+# nmf_res <- nmf(m_509, 2:20, nrun=200, seed=123456)
+# saveRDS(nmf_res,"./cache/nmf/weijie509_nmf.rds")
+nmf_res <- readRDS("./cache/nmf/weijie509_nmf.rds")
+plot(nmf_res)
+consensusmap(nmf_res$fit$`2`)
+consensusmap(nmf_res$fit$`3`)
+consensusmap(nmf_res$fit$`6`)
+consensusmap(nmf_res$fit$`7`)
+consensusmap(nmf_res$fit$`8`)
+consensusmap(nmf_res$fit$`10`)
+
+basismap(nmf_res$fit$`7`)
+coefmap(nmf_res$fit$`7`)
+
+# svg("./figures/weijie/509_consensus7.svg")
+# consensusmap(nmf_res$fit$`7`)
+# dev.off()
+# 
+# svg("./figures/weijie/509_basis7.svg")
+# basismap(nmf_res$fit$`7`)
+# dev.off()
+# 
+# svg("./figures/weijie/509_coef7.svg")
+# coefmap(nmf_res$fit$`7`)
+# dev.off()
+# 
+# ggplot(data.frame(rank=nmf_res$measures$rank,cophenetic=nmf_res$measures$cophenetic),
+#        aes(x=rank,y=cophenetic)) +
+#   geom_line() +
+#   geom_point(size=5) +
+#   theme_classic()
+# ggsave("./figures/weijie/509_cophenetic.svg")
+# 
+# df <- rbind(data.frame(rank=nmf_res$measures$rank,silhouette=nmf_res$measures$silhouette.basis,type="basis"),
+#             data.frame(rank=nmf_res$measures$rank,silhouette=nmf_res$measures$silhouette.coef,type="coef"),
+#             data.frame(rank=nmf_res$measures$rank,silhouette=nmf_res$measures$silhouette.consensus,type="consensus"))
+# ggplot(df,aes(x=rank,y=silhouette,color=type)) +
+#   geom_line() +
+#   geom_point(size=5) +
+#   theme_classic()
+# ggsave("./figures/weijie/509_silhouette.svg")
+```
+
+### 510
+```{r}
+# nmf_res <- nmf(m_510, 2:20, nrun=200, seed=123456)
+# saveRDS(nmf_res,"./cache/nmf/weijie510_nmf.rds")
+nmf_res <- readRDS("./cache/nmf/weijie510_nmf.rds")
+plot(nmf_res)
+consensusmap(nmf_res$fit$`2`)
+consensusmap(nmf_res$fit$`3`)
+consensusmap(nmf_res$fit$`4`)
+consensusmap(nmf_res$fit$`5`)
+consensusmap(nmf_res$fit$`6`)
+consensusmap(nmf_res$fit$`10`)
+
+basismap(nmf_res$fit$`6`)
+coefmap(nmf_res$fit$`6`)
+
+# svg("./figures/weijie/510_consensus6.svg")
+# consensusmap(nmf_res$fit$`6`)
+# dev.off()
+# 
+# svg("./figures/weijie/510_basis6.svg")
+# basismap(nmf_res$fit$`6`)
+# dev.off()
+# 
+# svg("./figures/weijie/510_coef6.svg")
+# coefmap(nmf_res$fit$`6`)
+# dev.off()
+# 
+# ggplot(data.frame(rank=nmf_res$measures$rank,cophenetic=nmf_res$measures$cophenetic),
+#        aes(x=rank,y=cophenetic)) +
+#   geom_line() +
+#   geom_point(size=5) +
+#   theme_classic()
+# ggsave("./figures/weijie/510_cophenetic.svg")
+# 
+# df <- rbind(data.frame(rank=nmf_res$measures$rank,silhouette=nmf_res$measures$silhouette.basis,type="basis"),
+#             data.frame(rank=nmf_res$measures$rank,silhouette=nmf_res$measures$silhouette.coef,type="coef"),
+#             data.frame(rank=nmf_res$measures$rank,silhouette=nmf_res$measures$silhouette.consensus,type="consensus"))
+# ggplot(df,aes(x=rank,y=silhouette,color=type)) +
+#   geom_line() +
+#   geom_point(size=5) +
+#   theme_classic()
+# ggsave("./figures/weijie/510_silhouette.svg")
+```
+
+### 121
+```{r}
+# nmf_res <- nmf(m_121, 2:6, nrun=200, seed=123456)
+# saveRDS(nmf_res,"./cache/nmf/weijie121_nmf.rds")
+nmf_res <- readRDS("./cache/nmf/weijie121_nmf.rds")
+plot(nmf_res)
+consensusmap(nmf_res$fit$`2`)
+consensusmap(nmf_res$fit$`3`)
+consensusmap(nmf_res$fit$`4`)
+consensusmap(nmf_res$fit$`5`)
+consensusmap(nmf_res$fit$`6`)
+
+consensusmap(nmf_res$fit$`3`)
+basismap(nmf_res$fit$`3`)
+
+# svg("./figures/weijie/121_consensus3.svg")
+# consensusmap(nmf_res$fit$`3`)
+# dev.off()
+# 
+# svg("./figures/weijie/121_basis3.svg")
+# basismap(nmf_res$fit$`3`)
+# dev.off()
+# 
+# svg("./figures/weijie/121_coef3.svg")
+# coefmap(nmf_res$fit$`3`)
+# dev.off()
+# 
+# ggplot(data.frame(rank=nmf_res$measures$rank,cophenetic=nmf_res$measures$cophenetic),
+#        aes(x=rank,y=cophenetic)) +
+#   geom_line() +
+#   geom_point(size=5) +
+#   theme_classic()
+# ggsave("./figures/weijie/121_cophenetic.svg")
+# 
+# df <- rbind(data.frame(rank=nmf_res$measures$rank,silhouette=nmf_res$measures$silhouette.basis,type="basis"),
+#             data.frame(rank=nmf_res$measures$rank,silhouette=nmf_res$measures$silhouette.coef,type="coef"),
+#             data.frame(rank=nmf_res$measures$rank,silhouette=nmf_res$measures$silhouette.consensus,type="consensus"))
+# ggplot(df,aes(x=rank,y=silhouette,color=type)) +
+#   geom_line() +
+#   geom_point(size=5) +
+#   theme_classic()
+# ggsave("./figures/weijie/121_silhouette.svg")
+```
+
+### 520
+```{r}
+# nmf_res <- nmf(m_520, 2:12, nrun=200, seed=123456)
+# saveRDS(nmf_res,"./cache/nmf/weijie520_nmf.rds")
+nmf_res <- readRDS("./cache/nmf/weijie520_nmf.rds")
+plot(nmf_res)
+consensusmap(nmf_res$fit$`2`)
+consensusmap(nmf_res$fit$`3`)
+consensusmap(nmf_res$fit$`4`)
+consensusmap(nmf_res$fit$`5`)
+consensusmap(nmf_res$fit$`6`)
+consensusmap(nmf_res$fit$`10`)
+
+basismap(nmf_res$fit$`5`)
+coefmap(nmf_res$fit$`5`)
+
+# svg("./figures/weijie/520_consensus5.svg")
+# consensusmap(nmf_res$fit$`5`)
+# dev.off()
+# 
+# svg("./figures/weijie/520_basis5.svg")
+# basismap(nmf_res$fit$`5`)
+# dev.off()
+# 
+# svg("./figures/weijie/520_coef5.svg")
+# coefmap(nmf_res$fit$`5`)
+# dev.off()
+# 
+# ggplot(data.frame(rank=nmf_res$measures$rank,cophenetic=nmf_res$measures$cophenetic),
+#        aes(x=rank,y=cophenetic)) +
+#   geom_line() +
+#   geom_point(size=5) +
+#   theme_classic()
+# ggsave("./figures/weijie/520_cophenetic.svg")
+# 
+# df <- rbind(data.frame(rank=nmf_res$measures$rank,silhouette=nmf_res$measures$silhouette.basis,type="basis"),
+#             data.frame(rank=nmf_res$measures$rank,silhouette=nmf_res$measures$silhouette.coef,type="coef"),
+#             data.frame(rank=nmf_res$measures$rank,silhouette=nmf_res$measures$silhouette.consensus,type="consensus"))
+# ggplot(df,aes(x=rank,y=silhouette,color=type)) +
+#   geom_line() +
+#   geom_point(size=5) +
+#   theme_classic()
+# ggsave("./figures/weijie/520_silhouette.svg")
+```
