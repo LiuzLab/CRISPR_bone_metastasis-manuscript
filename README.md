@@ -1,4 +1,4 @@
-# CRISPR barcoded bone metastasis
+# CRISPR barcoded bone metastasis analysis
 
 Code in this repository is used to reproduce the CRISPR barcoding analysis in manuscript: **The bone microenvironment invigorates metastatic seeds for further dissemination.**
 
