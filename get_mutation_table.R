@@ -23,9 +23,9 @@ for (i in 31:63) {
 saveRDS(weijie_510,"./cache/mutation_table/weijie_510.rds")
 
 weijie_121 <- list()
-for (i in 1:9) {
+for (i in 1:10) {
   print(i)
-  tmp <- readRDS(sprintf("./cache/traceQC_obj/21569_0%s.rds",i))
+  tmp <- readRDS(sprintf("./cache/traceQC_obj/21569_%02d.rds",i))
   weijie_121[[i]] <- tmp$mutation %>%
     group_by(type,start,length,mutate_to) %>%
     summarise(count=sum(count)) %>%
@@ -35,7 +35,7 @@ for (i in 1:9) {
 saveRDS(weijie_121,"./cache/mutation_table/weijie_121.rds")
 
 weijie_520 <- list()
-for (i in 10:30) {
+for (i in 11:30) {
   print(i)
   f <- sprintf("./cache/traceQC_obj/21569_%s.rds",i)
   if (file.exists(f)) {

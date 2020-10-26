@@ -24,7 +24,7 @@ for (input_file in list.files("./cache/alignment/",pattern="LIBIIMET")) {
                                  ref_file = ref_file,
                                  fastqc_file = paste("./qc_report/",name,"_fastqc.zip",sep=""),
                                  alignment_score_threshold = 200,
-                                 abundance_threshold = 1e-5,
+                                 abundance_threshold = 10,
                                  ncores = 1)
     saveRDS(obj,file=out_file)
   }}
@@ -61,7 +61,7 @@ for (input_file in list.files("./cache/alignment/",pattern="21569")) {
                                  ref_file = ref_file,
                                  fastqc_file = paste("./qc_report/",name,"_fastqc.zip",sep=""),
                                  alignment_score_threshold = 200,
-                                 abundance_threshold = 1e-5,
+                                 abundance_threshold = 10,
                                  ncores = 1)
     saveRDS(obj,file=out_file)
   }}

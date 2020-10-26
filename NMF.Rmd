@@ -87,7 +87,7 @@ weijie_121 <- readRDS("./cache/mutation_table/weijie_121.rds")
 
 df_all <- data.frame()
 shannon_entropy <- c()
-for (i in 1:9) {
+for (i in 1:10) {
   s1 <- weijie_121[[i]] %>%
     filter(type != "unmutated") %>%
     mutate(count=count*1e6/sum(count)) %>%
@@ -123,7 +123,7 @@ weijie_520 <- readRDS("./cache/mutation_table/weijie_520.rds")
 df_all <- data.frame()
 ids <- c()
 shannon_entropy <- c()
-for (i in 10:29) {
+for (i in 11:29) {
   if (!is.null(weijie_520[[i]])) {
   s1 <- weijie_520[[i]] %>%
     filter(type != "unmutated") %>%
